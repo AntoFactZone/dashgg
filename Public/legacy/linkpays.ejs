@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('./components/head') %>
+  <body>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <div class="container-scroller">
+      <!-- partial:partials/_sidebar.html -->
+      <%- include('./components/sidebar') %>
+      <!-- partial -->
+      <div class="container-fluid page-body-wrapper">
+        <!-- partial:partials/_navbar.html -->
+        <%- include('./components/topnav') %>
+        <!-- partial -->
+        <div style="background-color: #111319" class="main-panel">
+          <div style="background-color: #111319" class="content-wrapper">
+            <h2>Linkpays</h2>
+            <p class="text-gray">Earn coins by completing Linkpays links.</p>
+            <% if (req.query.err) { %>
+              <div style="border-radius: 15px;" class="alert">
+                <% if (req.query.err == "MUSTCOMPLETECAPTCHA") { %>
+                  You must complete the captcha to prove you are human!
+                <% } else if (req.query.err == "INVALIDCAPTCHARESPONSE") { %>
+                  You submitted an invalid captcha response, try again.
+                <% } %>
+              </div>
+            <% } %>
+            <% if (req.query.err == "SUCCESSlinkpays") { %>
+              <div class="alert" style="background-color: #2800b9; border-radius: 15px;">
+                Success! <%= settings.linkpays.coins %> coins were added to your account.
+              </div>
+            <% } %>
+            <div class="row">
+              <div class="col-md-12 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <p>Every time you complete a Linkpays, you will earn <%= settings.linkpays.coins %> coins!<br>Generate a link below:</p>
+                    <button class="btn btn-primary btn-lg" onclick="generate()">Generate Link</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="loading-panel" style="display: none; text-align: center; margin-top: 20px;">
+              <img src="loading.gif" alt="Loading..." /> <!-- Replace with an actual loading animation or text -->
+              <p>Generating your link, please wait...</p>
+            </div>
+
+            <div id="error-panel" style="display: none; color: red; text-align: center; margin-top: 20px;">
+              <p id="error-message"></p>
+            </div>
+
+            <script type="text/javascript">
+              const loadingPanel = document.getElementById('loading-panel');
+              const errorPanel = document.getElementById('error-panel');
+              const errorMessage = document.getElementById('error-message');
+
+              function generate() {
+                loadingPanel.style.display = 'block'; // Show loading panel
+                errorPanel.style.display = 'none';   // Hide error panel
+
+                // Make a fetch request to the backend to generate the shortened URL
+                fetch('/linkpays/generate') // Updated endpoint to the correct one
+                  .then(response => response.json())
+                  .then(data => {
+                    loadingPanel.style.display = 'none'; // Hide loading panel
+
+                    if (data.link) {
+                      // If the backend returns a link, redirect to the shortened URL
+                      window.location.replace(data.link);
+                    } else {
+                      // If there's an error, handle it accordingly
+                      errorMessage.textContent = 'Failed to generate the link. Please try again.';
+                      errorPanel.style.display = 'block'; // Show error panel
+                      console.error(data);
+                    }
+                  })
+                  .catch(error => {
+                    loadingPanel.style.display = 'none'; // Hide loading panel
+                    errorMessage.textContent = 'An error occurred while generating the link. Please try again.';
+                    errorPanel.style.display = 'block'; // Show error panel
+                    console.error('Error:', error);
+                  });
+              }
+            </script>
+          </div>
+          <!-- content-wrapper ends -->
+          <%- include('./components/footer') %>
+        </div>
+        <!-- main-panel ends -->
+      </div>
+      <!-- page-body-wrapper ends -->
+    </div>
+    <!-- container-scroller -->
+    <!-- plugins:js -->
+    <script src="../../assets/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="../../assets/vendors/select2/select2.min.js"></script>
+    <script src="../../assets/vendors/typeahead.js/typeahead.bundle.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="../../assets/js/off-canvas.js"></script>
+    <script src="../../assets/js/hoverable-collapse.js"></script>
+    <script src="../../assets/js/misc.js"></script>
+    <script src="../../assets/js/settings.js"></script>
+    <script src="../../assets/js/todolist.js"></script>
+    <!-- endinject -->
+    <!-- Custom js for this page -->
+    <script src="../../assets/js/file-upload.js"></script>
+    <script src="../../assets/js/typeahead.js"></script>
+    <script src="../../assets/js/select2.js"></script>
+    <!-- End custom js for this page -->
+  </body>
+</html>
