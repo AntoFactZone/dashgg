@@ -1,5 +1,4 @@
 const settings = require('../settings.json')
-const verifyCaptchaResponse = require('../Components/verifyCaptchaResponse')
 
 module.exports.load = async function (app, db) {
 
@@ -20,11 +19,6 @@ module.exports.load = async function (app, db) {
             return res.redirect(`/lv?err=REACHEDDAILYLIMIT`)
         }
 
-        const captcha = req.query.captcha
-        if (!captcha) return res.redirect(`/lv?err=MUSTCOMPLETECAPTCHA`)
-        const verified = await verifyCaptchaResponse(captcha)
-        if (!verified) return res.redirect(`/lv?err=INVALIDCAPTCHARESPONSE`)
-
         let referer = req.headers.referer
         if (!referer) return res.send('An error occured with your browser!')
         referer = referer.toLowerCase()
@@ -33,7 +27,7 @@ module.exports.load = async function (app, db) {
         if (!referer.endsWith(`/`)) referer += `/`
 
         const code = makeid(12)
-        const lvurl = linkvertise(settings.linkvertise.userid, referer + `redeem?code=${code}`)
+        const lvurl = linkvertise(settings.linkvertise.userid, referer + `redeem/${code}`)
 
         lvcodes[req.session.userinfo.id] = {
             code: code,
@@ -44,7 +38,7 @@ module.exports.load = async function (app, db) {
         res.redirect(lvurl)
     })
 
-    app.get(`/lv/redeem`, async (req, res) => {
+    app.get(`/lv/redeem/:code`, async (req, res) => {
         if (!req.session.pterodactyl) return res.redirect("/");
 
         if (cooldowns[req.session.userinfo.id] && cooldowns[req.session.userinfo.id] > Date.now()) {
@@ -53,7 +47,8 @@ module.exports.load = async function (app, db) {
             delete cooldowns[req.session.userinfo.id]
         }
 
-        const code = req.query.code
+        // We get the code from the paramters, eg (client.domain.com/lv/redeem/abc123) here "abc123" is the code
+        const code = req.params.code
         if (!code) return res.send('An error occured with your browser!')
         if (!req.headers.referer || !req.headers.referer.includes('linkvertise.com')) return res.send('<p>Hm... our systems detected something going on! Please make sure you are not using an ad blocker (or linkvertise bypasser).</p> <img src="https://i.imgur.com/lwbn3E9.png" alt="robot" height="300">')
 
